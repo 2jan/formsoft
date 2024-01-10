@@ -1,9 +1,12 @@
 <script setup>
 import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import TextInput from '@/Components/TextInput.vue';
 import Modal from '@/Components/Modal.vue';
 import Pagination from '@/Components/Pagination.vue';
 
@@ -17,6 +20,7 @@ const props = defineProps({
 const formIsVisible = ref(false);
 
 const form = useForm({
+    id: null,
     invoice_number: null,
     customer_tax_id: null,
     seller_tax_id: null,
@@ -31,6 +35,24 @@ function formatDate(date) {
 }
 
 function showForm(item) {
+    if (typeof item.id === 'number') {
+        form.id = item.id;
+    }
+    if (typeof item.invoice_number === 'string') {
+        form.invoice_number = item.invoice_number;
+    }
+    if (typeof item.customer_tax_id === 'string') {
+        form.customer_tax_id = item.customer_tax_id;
+    }
+    if (typeof item.seller_tax_id === 'string') {
+        form.seller_tax_id = item.seller_tax_id;
+    }
+    if (typeof item.product_name === 'string') {
+        form.product_name = item.product_name;
+    }
+    if (typeof item.net_price === 'string') {
+        form.net_price = item.net_price;
+    }
     formIsVisible.value = true;
 }
 
@@ -39,8 +61,17 @@ function closeForm() {
     form.reset();
 }
 
-function testForm() {
-    console.log(form);
+function submitForm() {
+    form.post(route('invoices.save'), {
+        preserveScroll: true,
+        onSuccess: () => closeForm()
+    });
+}
+
+function deleteInvoice(item) {
+    router.delete(route('invoices.delete', {id: item.id}), {
+        onError: errors => console.log(errors)
+    });
 }
 
 </script>
@@ -57,45 +88,81 @@ function testForm() {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-auto shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <PrimaryButton @click="showForm({})">Test</PrimaryButton>
+                        <div class="flex flex-row space-x-3 justify-end">
+                            <PrimaryButton @click="showForm({})">
+                                Dodaj fakturę
+                            </PrimaryButton>
+                        </div>
                         <Modal :show="formIsVisible" @close="closeForm">
                             <div class="p-6">
                                 <h2 class="text-lg font-medium text-gray-900">
                                     Wprowadź dane faktury
                                 </h2>
                                 <form @submit.prevent="form.post('/invoices')">
+                                    <input type="hidden" id="id" v-model="form.id" />
                                     <div class="mt-6">
-                                        <label for="invoice_number">Nr faktury:</label>
-                                        <input id="invoice_number" v-model="form.invoice_number" />
+                                        <InputLabel for="invoice_number" value="Nr faktury" class="sr-only" />
+                                        <TextInput 
+                                            id="invoice_number"
+                                            v-model="form.invoice_number" 
+                                            class="mt-1 block w-3/4" 
+                                            placeholder="Numer faktury"
+                                        />
+
+                                        <InputError :message="form.errors.invoice_number" class="mt-2" />
                                     </div>
 
                                     <div class="mt-6">
-                                        <label for="customer_tax_id">NIP kupującego:</label>
-                                        <input id="customer_tax_id" v-model="form.customer_tax_id" />
+                                        <InputLabel for="customer_tax_id" value="NIP kupującego" class="sr-only" />
+                                        <TextInput 
+                                            id="customer_tax_id"
+                                            v-model="form.customer_tax_id" 
+                                            class="mt-1 block w-3/4" 
+                                            placeholder="NIP kupującego"
+                                        />
+
+                                        <InputError :message="form.errors.customer_tax_id" class="mt-2" />
                                     </div>
-                                    
+
                                     <div class="mt-6">
-                                        <label for="seller_tax_id">NIP sprzedającego:</label>
-                                        <input id="seller_tax_id" v-model="form.seller_tax_id" />
+                                        <InputLabel for="seller_tax_id" value="NIP sprzedającego" class="sr-only" />
+                                        <TextInput 
+                                            id="seller_tax_id"
+                                            v-model="form.seller_tax_id" 
+                                            class="mt-1 block w-3/4" 
+                                            placeholder="NIP sprzedającego"
+                                        />
+
+                                        <InputError :message="form.errors.seller_tax_id" class="mt-2" />
                                     </div>
-                                    
+
                                     <div class="mt-6">
-                                        <label for="product_name">Nazwa produktu:</label>
-                                        <input id="product_name" v-model="form.product_name" />
+                                        <InputLabel for="product_name" value="Nazwa produktu" class="sr-only" />
+                                        <TextInput 
+                                            id="product_name"
+                                            v-model="form.product_name" 
+                                            class="mt-1 block w-3/4" 
+                                            placeholder="Nazwa produktu"
+                                        />
+
+                                        <InputError :message="form.errors.product_name" class="mt-2" />
                                     </div>
-                                    
+
                                     <div class="mt-6">
-                                        <label for="net_price">Kwota netto:</label>
-                                        <input id="net_price" v-model="form.net_price" />
+                                        <InputLabel for="net_price" value="Kwota netto" class="sr-only" />
+                                        <TextInput 
+                                            id="net_price"
+                                            v-model="form.net_price" 
+                                            class="mt-1 block w-3/4" 
+                                            placeholder="Kwota netto"
+                                        />
+
+                                        <InputError :message="form.errors.net_price" class="mt-2" />
                                     </div>
                                     <div class="mt-6 flex justify-end">
                                         <SecondaryButton @click="closeForm">Anuluj</SecondaryButton>
-                                        <PrimaryButton
-                                            class="ms-3"
-                                            :class="{ 'opacity-25': form.processing }"
-                                            :disabled="form.processing"
-                                            @click="testForm"
-                                        >
+                                        <PrimaryButton class="ms-3" :class="{ 'opacity-25': form.processing }"
+                                            :disabled="form.processing" @click="submitForm">
                                             Zapisz
                                         </PrimaryButton>
                                     </div>
@@ -115,7 +182,7 @@ function testForm() {
                                 <th class="pb-4 pt-6 px-1">Kwota netto</th>
                                 <th class="pb-4 pt-6 px-1">Data wystawienia</th>
                                 <th class="pb-4 pt-6 px-1">Data edycji</th>
-                                <th class="pb-4 pt-6 px-1">Funkcje</th>
+                                <th class="pb-4 pt-6 px-1 w-28 text-center">Funkcje</th>
                             </tr>
                             <tr v-for="item in list" :key="item.id" class="hover:bg-gray-100 focus-within:bg-gray-100">
                                 <td class="border-t p-1">
@@ -139,8 +206,9 @@ function testForm() {
                                 <td class="border-t p-1">
                                     {{ formatDate(item.updated_at) }}
                                 </td>
-                                <td class="border-t p-1">
-                                    <button @click="showForm(item)">Edytuj</button>
+                                <td class="border-t p-1 flex space-x-1 justify-end">
+                                    <button @click="showForm(item)" class="text-white text-xs bg-slate-500 rounded p-1 hover:bg-slate-400">Edytuj</button>
+                                    <button @click="deleteInvoice(item)" class="text-white text-xs bg-slate-500 rounded p-1 hover:bg-slate-400">Usuń</button>
                                 </td>
                             </tr>
                             <tr v-if="list.length === 0">
@@ -148,7 +216,7 @@ function testForm() {
                             </tr>
                             <tfoot v-if="numPages > 0">
                                 <tr>
-                                    <td class="px-6 py-4 border-t" colspan="8">
+                                    <td class="px-0 py-4 border-t" colspan="8">
                                         <Pagination :href="href" :currentPage="currentPage" :numPages="numPages">
                                         </Pagination>
                                     </td>
