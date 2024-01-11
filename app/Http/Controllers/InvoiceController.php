@@ -3,14 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Rules\Nip;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Invoice controller
+ */
 class InvoiceController extends Controller
 {
+    /**
+     * Index action
+     *
+     * @param Request $request
+     * @return Response
+     */
     public function index(Request $request): Response
     {
         $filtered = Invoice::where('user_id', $request->user()->id);
@@ -39,12 +49,18 @@ class InvoiceController extends Controller
         ]);
     }
 
+    /**
+     * Save action
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
     public function save(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'invoice_number'    => ['required', 'max:64'],
-            'customer_tax_id'   => ['required', 'digits:10'],
-            'seller_tax_id'     => ['required', 'digits:10'],
+            'customer_tax_id'   => ['required', new Nip()],
+            'seller_tax_id'     => ['required', new Nip()],
             'product_name'      => ['required', 'max:128'],
             'net_price'         => ['required', 'decimal:0,2']
         ]);
@@ -66,6 +82,12 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index');
     }
 
+    /**
+     * Delete action
+     *
+     * @param integer $id
+     * @return RedirectResponse
+     */
     public function delete(int $id): RedirectResponse
     {
         Invoice::destroy($id);
